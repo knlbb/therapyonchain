@@ -454,26 +454,32 @@ const Chat = () => {
               </View>
             </View>
         <View className="absolute bottom-5 flex h-full w-full">
-          <View className="bottom-0 h-[90%] pt-5 justify-end absolute">
+          <View className="bottom-0 h-[100%] w-full pt-5 justify-end absolute">
 
             {
               chatOrCall ?
                 <>
-                  <SafeAreaView className="h-full flex relative bg-">
-                    <View className='flex flex-row h-full w-full bg--100'>
-                        <View className="w-full items-center justify-center bg--100 h-full">
-                            <View className=" bg--100 p-5">
-                              <TouchableOpacity className="bg-black shadow-md shadow- w-1/4 rounded-full items-center justify-center aspect-square" onPress={() => setChatOrCall(false)}>
-                                <MaterialIcons name="chat-bubble" size={32} color="white" />
-                              </TouchableOpacity>
-                            </View>
-                            <View className=" bg--300 p-5 ">
-                              <TouchableOpacity className="bg-black shadow-md shadow- w-1/4 rounded-full items-center justify-center aspect-square" onPress={() => setCall(true)}>
-                                <MaterialIcons name="call" size={32} color="white" />
-                              </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
+                  <SafeAreaView className="h-full w-full p-5  ">
+                    <TouchableOpacity onPress={() => setChatOrCall(false)} className="h-1/2 items-center justify-center w-full rounded-xl mb-5 bg-black">
+                      <MaterialIcons name="chat-bubble" size={48} color="white" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setCall(true)} className="h-1/2 w-full items-center justify-center rounded-xl bg-black">
+                      <MaterialIcons name="call" size={48} color="white" />
+                    </TouchableOpacity>
+                    {/* <View className='flex flex-row h-full w-full bg-blue-100'> */}
+                      {/* <View className="w-full items-center justify-center bg-green-100 h-full">
+                          <View className=" bg-red-100 p-5">
+                            <TouchableOpacity className="bg-black shadow-md shadow- w-1/4 rounded-full items-center justify-center aspect-square" onPress={() => setChatOrCall(false)}>
+                              <MaterialIcons name="chat-bubble" size={32} color="white" />
+                            </TouchableOpacity>
+                          </View>
+                          <View className=" bg--300 p-5 ">
+                            <TouchableOpacity className="bg-black shadow-md shadow- w-1/4 rounded-full items-center justify-center aspect-square" onPress={() => setCall(true)}>
+                              <MaterialIcons name="call" size={32} color="white" />
+                            </TouchableOpacity>
+                          </View>
+                      </View> */}
+                    {/* </View> */}
                   </SafeAreaView>
                 </>
               :

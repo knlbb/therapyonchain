@@ -3,6 +3,7 @@ import { router } from "expo-router"
 import { useState } from "react"
 import {  Text, TextInput, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+// import storeJsonFile from '../../components/storeToIPFS'
 
 const SignIn = () => {
         const { auth } = useDynamic();
@@ -13,6 +14,8 @@ const SignIn = () => {
         const [otpSent, setOtpSent] = useState(false)
       
         const handleSendOTP = async () => {
+            console.log("sending opt");
+            
           await client.auth.email.sendOTP(email)
           setOtpSent(true)
         }
@@ -21,19 +24,30 @@ const SignIn = () => {
           client.auth.email.resendOTP()
         }
       
-        const handleVerifyOTP =  () => {
+        const handleVerifyOTP = async () => {
             console.log("here");
-            
-           client.auth.email.verifyOTP(otp)
+            try{
+
+                await client.auth.email.verifyOTP(otp)
+            }catch (err){
+                console.log(err);
+                
+            }
           if (auth.authenticatedUser){
-            router.replace(
-            {
-                // pathname: '/(root)/home',
-                pathname: '/(root)/home',
-                params: {
-                  walletAddress: auth.authenticatedUser?.verifiedCredentials[0].address
-            }})
-            console.log(auth.authenticatedUser?.verifiedCredentials);
+            console.log("new?", auth.authenticatedUser.newUser);
+            
+            if (!auth.authenticatedUser.newUser){
+                router.replace(
+                    {
+                        // pathname: '/(root)/home',
+                        pathname: '/(root)/home',
+                        params: {
+                            walletAddress: auth.authenticatedUser?.verifiedCredentials[0].address
+                        }})
+            }else{
+                router.replace({pathname: '/(onboarding)/information', params:{walletAddress: auth.authenticatedUser?.verifiedCredentials[0].address}})
+            }
+            console.log(auth.authenticatedUser);
           }
           
         }

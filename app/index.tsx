@@ -7,7 +7,7 @@ const Home = () => {
     return (
         <>
             <client.reactNative.WebView />
-            <Redirect href="/(auth)/sign-in"/>
+            <Redirect href="/(root)/home"/>
         </>
     )
 }
