@@ -6,18 +6,20 @@ import { SafeAreaView } from "react-native-safe-area-context"
 // import storeJsonFile from '../../components/storeToIPFS'
 import { useSessionContext } from "../session"
 
-const SignIn = () => {
-        const { auth } = useDynamic();
+ const SignIn = () => {
+
 
         const { sessionId, setSessionId } = useSessionContext();
+        const { auth } = useDynamic();
+
         const [email, setEmail] = useState('')
         const [otp, setOtp] = useState('')
         const [otpSent, setOtpSent] = useState(false)
       
-        const handleSendOTP = async () => {
-            console.log("sending opt");
+        const handleSendOTP =  () => {
+            console.log("sending otp");
             
-          await client.auth.email.sendOTP(email)
+           client.auth.email.sendOTP(email)
           setOtpSent(true)
         }
       
@@ -71,7 +73,7 @@ const SignIn = () => {
                   className=" w-2/3 border rounded-xl border-gray-200 p-3"
                 />
       
-                <TouchableOpacity onPress={handleSendOTP} className="w-2/3 p-3 m-5 items-center bg-black rounded-xl">
+                <TouchableOpacity onPress={(handleSendOTP)} className="w-2/3 p-3 m-5 items-center bg-black rounded-xl">
                     <Text className="text-white">
                         Send OTP
                     </Text>

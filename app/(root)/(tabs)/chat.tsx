@@ -14,6 +14,10 @@ import { LogBox } from 'react-native';
 import { useSessionContext } from '../../session';
 LogBox.ignoreAllLogs(true);  // Disable yellow warning boxes
 
+import { client } from "@/components/dynamicClient"
+import { useReactiveClient } from "@dynamic-labs/react-hooks";
+import {mainnet} from 'viem/chains'
+
 
 interface Message {
   id: number;
@@ -23,6 +27,7 @@ interface Message {
 
 
 const Chat = () => {
+  const { auth, wallets } = useReactiveClient(client);
 
   const { sessionId, setSessionId } = useSessionContext();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -43,6 +48,32 @@ const Chat = () => {
 
   };
 
+  const signMessages = () => {
+    console.log("sign");
+    
+    wallets.userWallets.map(async (wallet) => {
+      console.log("add",wallet.address);
+
+      console.log(client.viem);
+      
+      const walletClient = client.viem.createWalletClient({
+        wallet,
+      });
+
+      
+      console.log("client", walletClient);
+      
+      const signedMessage = await walletClient.signMessage({
+        message: "Hello, world!",
+      });
+      
+      console.log("signed", signedMessage);
+    })
+
+  }
+
+  const sId = "gd92e5107-306f-4591-b289-d0af95500ac0"
+
   // Send a message
   const sendMessage = () => {
     // if (input.trim()) {
@@ -61,7 +92,8 @@ const Chat = () => {
       //   receiveMessage('Response message');
       // }, 1000);
     // }
-    handleSubmit(messageToGPT)
+    signMessages()
+    // handleSubmit(messageToGPT)
   };
 
 
@@ -425,7 +457,7 @@ const Chat = () => {
 
   const scrollViewRef = useRef();
 
-  console.log('eve', messages);
+  // console.log('eve', messages);
 
   return (
     <KeyboardAvoidingView
@@ -448,7 +480,6 @@ const Chat = () => {
             </View>
         <View className="absolute bottom-5 flex h-full w-full">
           <View className="bottom-0 h-[100%] w-full pt-5 justify-end absolute">
-
             {
               chatOrCall ?
                 <>
