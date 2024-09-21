@@ -108,11 +108,11 @@ import { useLocalSearchParams } from "expo-router";
         </View>
         
         {/* <TouchableOpacity className="bg-[#c99ded] py-3 px-5 mx-5 my-2 rounded-lg" onPress={() => {router.replace('/(root)/chat')}}> */}
-        <TouchableOpacity className="bg-black py-3 px-5 mx-5 my-2 rounded-lg" onPress={() => {router.replace('/(root)/chat')}}>
+        <TouchableOpacity className="bg-black py-3 px-5 mx-5 my-2 rounded-lg" onPress={() => {router.replace('/(root)/mood')}}>
           <View className="flex flex-row items-center w-full justify-center relative">
             {/* <Image className="h-12 w-12 rounded-full border border-white mr-3" source={require('../../assets/chris.jpg')}/> */}
             <Text className="text-white">
-                View Mood History
+                View Wellbeing History
             </Text>
             {/* <Image className="h-6 w-6 right-0 absolute" source={require('../../assets/send.png')}/> */}
           </View>

@@ -24,18 +24,21 @@ const SignIn = () => {
         const handleVerifyOTP =  () => {
             console.log("here");
             
-           client.auth.email.verifyOTP(otp)
-          if (auth.authenticatedUser){
-            router.replace(
-            {
-                // pathname: '/(root)/home',
-                pathname: '/(root)/home',
-                params: {
-                  walletAddress: auth.authenticatedUser?.verifiedCredentials[0].address
-            }})
-            console.log(auth.authenticatedUser?.verifiedCredentials);
-          }
-          
+            try {
+              client.auth.email.verifyOTP(otp)
+              if (auth.authenticatedUser){
+                router.replace(
+                {
+                    // pathname: '/(root)/home',
+                    pathname: '/(root)/home',
+                    params: {
+                      walletAddress: auth.authenticatedUser?.verifiedCredentials[0].address
+                }})
+                console.log(auth.authenticatedUser?.verifiedCredentials);
+              }
+            } catch (error) {
+              console.log(error);
+            }        
         }
       
         return (<>
@@ -97,7 +100,13 @@ const SignIn = () => {
     //         SignIn
     //     </Text>
     //     <TouchableOpacity className="" onPress={() => {
-    //         router.replace('/(root)/home')
+    //         router.replace(
+    //           {
+    //               // pathname: '/(root)/home',
+    //               pathname: '/(root)/home',
+    //               params: {
+    //                 walletAddress: ""
+    //           }})
     //     }}>
     //         <Text>
     //             Next

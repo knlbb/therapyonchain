@@ -12,7 +12,7 @@ function makeStorageClient(): Web3Storage {
 }
 
 // Function to store a JSON file on IPFS
-async function storeJsonFile(): Promise<string> {
+async function storeJsonFile(data: any): Promise<string> {
   // Create a JSON object to be uploaded
   const jsonObject = {
     sender: "alice",

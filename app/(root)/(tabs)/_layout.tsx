@@ -10,6 +10,7 @@ const TabLayout = () => {
         <Tabs screenOptions={{headerShown: false}} tabBar={props => <TabBar {...props}/>}>
             <Tabs.Screen name='home' options={{title: "Home" }}/>
             <Tabs.Screen name='chat' options={{title: "Chat"}}/>
+            <Tabs.Screen name='mood' options={{title: "Mood"}}/>
             <Tabs.Screen name='profile' options={{title: "Profile"}}/>
         </Tabs>
   )

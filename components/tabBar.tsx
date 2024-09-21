@@ -10,6 +10,7 @@ const TabBar = ({ state, descriptors, navigation }: any) => {
     const icons = {
         home: (props:any) => <MaterialIcons name="home" size={24} color="black" {...props} />,
         chat: (props:any) => <MaterialIcons name="chat" size={24} color="black" {...props}/>,
+        mood: (props:any) => <MaterialIcons name="mood" size={24} color="black" {...props}/>,
         profile: (props:any) => <MaterialIcons name="account-circle" size={24} color="black" {...props} /> 
     }
 
