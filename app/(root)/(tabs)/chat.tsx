@@ -56,7 +56,7 @@ const Chat = () => {
       //   receiveMessage('Response message');
       // }, 1000);
     // }
-    handleSubmit()
+    handleSubmit(messageToGPT)
   };
 
   
@@ -161,7 +161,7 @@ const Chat = () => {
 
       await soundObject.loadAsync({ uri: audioUri });
       await soundObject.playAsync();
-      setSound(soundObject);
+      // setSound(soundObject);
     } catch (error) {
       console.log('Error', 'Failed to play the audio');
     }

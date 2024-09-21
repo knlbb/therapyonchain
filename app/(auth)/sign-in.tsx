@@ -1,9 +1,12 @@
-import { client } from "@/components/dynamicClient"
+import { client, useDynamic } from "@/components/dynamicClient"
+import { router } from "expo-router"
 import { useState } from "react"
 import {  Text, TextInput, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 const SignIn = () => {
+        const { auth } = useDynamic();
+
 
         const [email, setEmail] = useState('')
         const [otp, setOtp] = useState('')
@@ -18,9 +21,21 @@ const SignIn = () => {
           client.auth.email.resendOTP()
         }
       
-        const handleVerifyOTP = () => {
-          console.log(
-           client.auth.email.verifyOTP(otp));
+        const handleVerifyOTP =  () => {
+            console.log("here");
+            
+           client.auth.email.verifyOTP(otp)
+          if (auth.authenticatedUser){
+            router.replace(
+            {
+                // pathname: '/(root)/home',
+                pathname: '/(root)/home',
+                params: {
+                  walletAddress: auth.authenticatedUser?.verifiedCredentials[0].address
+            }})
+            console.log(auth.authenticatedUser?.verifiedCredentials);
+          }
+          
         }
       
         return (<>
@@ -28,37 +43,43 @@ const SignIn = () => {
         
             <SafeAreaView className="flex h-full items-center justify-center bg-white">
             {!otpSent ? (
-              <View>
+              <View className="w-full items-center p-5">
+                <Text className="text-xl font-bold m-5">
+                    Sign In
+                </Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
                   placeholder="Enter your email"
-                  className="bg-red-50"
+                  className=" w-2/3 border rounded-xl border-gray-200 p-3"
                 />
       
-                <TouchableOpacity onPress={handleSendOTP}>
-                    <Text>
+                <TouchableOpacity onPress={handleSendOTP} className="w-2/3 p-3 m-5 items-center bg-black rounded-xl">
+                    <Text className="text-white">
                         Send OTP
                     </Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              <View>
+              <View className="w-full items-center p-5">
+                <Text className="text-xl font-bold m-5">
+                    Verify
+                </Text>
                 <TextInput
                   value={otp}
                   onChangeText={setOtp}
                   placeholder="Enter OTP"
-                  className="bg-green-100"
+                  className=" w-2/3 border rounded-xl border-gray-200 p-3"
                 />
       
-                <TouchableOpacity onPress={handleVerifyOTP}>
-                    <Text>
+                <TouchableOpacity onPress={handleVerifyOTP} className="w-2/3 p-3 m-5 items-center bg-black rounded-xl">
+                    <Text className="text-white">
                         Verify OTP
                     </Text>
                 </TouchableOpacity>
       
-                <TouchableOpacity onPress={handleResendOTP}>
-                    <Text>
+                <TouchableOpacity onPress={handleResendOTP} className="w-2/3 p-3 items-center border border-black rounded-xl">
+                    <Text className="">
                         Resend OTP
                     </Text>
                 </TouchableOpacity>

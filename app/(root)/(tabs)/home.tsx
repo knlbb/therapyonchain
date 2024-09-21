@@ -4,8 +4,12 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useLocalSearchParams } from "expo-router";
+
 
  const Home = () => {
+  const { walletAddress } = useLocalSearchParams();
+
   return (
     <SafeAreaView className="bg-white">
       <View className='h-20 flex flex-row px-5'>
@@ -20,7 +24,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
             <Text className="text-xl font-semibold">Chris</Text>
             <Text className="text-xl ">!</Text>
           </View>
-            {/* <Text className="text-lg text-gray-500 font-normal">00:46 </Text> */}
+          <Text className="text-xs text-gray-500 font-normal">{walletAddress}</Text>
         </View>
         <View className="w-1/6 h-full items-center flex justify-center">
           {/* <MaterialIcons name="exit-to-app" size={24} color="#B22222" /> */}
