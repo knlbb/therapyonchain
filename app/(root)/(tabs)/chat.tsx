@@ -1,7 +1,7 @@
 import { Text, TextInput, TouchableOpacity, View, Image, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, Keyboard, ScrollView, Modal, Pressable} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import * as Speech from 'expo-speech';
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 // import Header from '../../components/header'
 import { router } from "expo-router";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -11,6 +11,7 @@ import { Audio } from 'expo-av';
 import * as Permissions from 'expo-permissions';
 import axios from 'axios';
 import { LogBox } from 'react-native';
+import { useSessionContext } from '../../session';
 LogBox.ignoreAllLogs(true);  // Disable yellow warning boxes
 
 
@@ -21,10 +22,14 @@ interface Message {
 }
 
 
-
 const Chat = () => {
 
+  const { sessionId, setSessionId } = useSessionContext();
   const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    console.log(sessionId);
+  }, [sessionId]);
 
   // Simulate receiving a message
   const receiveMessage = (text: string) => {
@@ -58,18 +63,6 @@ const Chat = () => {
     // }
     handleSubmit(messageToGPT)
   };
-
-  
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -4,11 +4,12 @@ import { useState } from "react"
 import {  Text, TextInput, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 // import storeJsonFile from '../../components/storeToIPFS'
+import { useSessionContext } from "../session"
 
 const SignIn = () => {
         const { auth } = useDynamic();
 
-
+        const { sessionId, setSessionId } = useSessionContext();
         const [email, setEmail] = useState('')
         const [otp, setOtp] = useState('')
         const [otpSent, setOtpSent] = useState(false)
@@ -48,6 +49,8 @@ const SignIn = () => {
                 router.replace({pathname: '/(onboarding)/information', params:{walletAddress: auth.authenticatedUser?.verifiedCredentials[0].address}})
             }
             console.log(auth.authenticatedUser);
+            setSessionId(auth.authenticatedUser?.sessionId);
+            console.log('sessionId', sessionId);
           }
           
         }

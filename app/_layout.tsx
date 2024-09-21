@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { StatusBar, } from 'react-native'
+import { SessionProvider } from './session';
 
 
 
@@ -26,7 +27,8 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <SessionProvider>
+      <>
       <StatusBar backgroundColor={"#FFFFFF"} barStyle={"dark-content"}/> 
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -35,6 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-    </>
+      </>
+    </SessionProvider>
   );
 }
