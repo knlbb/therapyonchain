@@ -7,8 +7,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useSessionContext } from "../session"
 
  const SignIn = () => {
-
-
         const { sessionId, setSessionId } = useSessionContext();
         const { auth } = useDynamic();
 

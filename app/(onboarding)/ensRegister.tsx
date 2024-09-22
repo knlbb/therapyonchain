@@ -39,7 +39,7 @@ const SignUp = () => {
           const responseData = await response.json();
           console.log(responseData);
           if (responseData["success"]){
-            router.replace("/(root)/home")
+            router.replace("/(onboarding)/signMessage")
           }
         } catch (error) {
           console.error('Error:', error);

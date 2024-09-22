@@ -2,21 +2,25 @@ import { Text, TextInput, TouchableOpacity, View, Image, TouchableWithoutFeedbac
 import { SafeAreaView } from "react-native-safe-area-context"
 import * as Speech from 'expo-speech';
 import { useEffect, useState, useRef, useContext } from "react";
-// import Header from '../../components/header'
 import { router } from "expo-router";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-// import { useVoiceRecognition } from "@/app/hooks/useVoiceRecognition";\
 import { Audio } from 'expo-av';
 import * as Permissions from 'expo-permissions';
 import axios from 'axios';
 import { LogBox } from 'react-native';
 import { useSessionContext } from '../../session';
 LogBox.ignoreAllLogs(true);  // Disable yellow warning boxes
-
-import { client } from "@/components/dynamicClient"
+import { keccak256 } from 'ethers'; // ethers can be used for this
+import {  ethers} from 'ethers';
+import { createPublicClient, http } from 'viem';
+import { oasisTestnet } from 'viem/chains';
+import { client } from "@/components/dynamicClient";
 import { useReactiveClient } from "@dynamic-labs/react-hooks";
-import {mainnet} from 'viem/chains'
+import { defineChain, parseAbi } from 'viem'
+import { JsonRpcProvider } from 'ethers';
+
+
 
 
 interface Message {
@@ -25,11 +29,38 @@ interface Message {
   sender: 'me' | 'other';  // To differentiate between sent and received messages
 }
 
+export const NyxChain = defineChain({
+  id: 0x5afd, // This is the chain ID in hexadecimal (24061 in decimal)
+  name: 'NyxChain',
+  network: 'nyx', // A short identifier for the network (optional but recommended)
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Oasis Test',
+    symbol: 'OATEST',
+  },
+  rpcUrls: {
+    default: {
+      http: ['http://47.236.76.246:8545'], // Your local blockchain URL
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'NyxChain Explorer',
+      url: '', // Optional block explorer URL, leave blank or remove if none
+    },
+  },
+});
+
+import Web3 from 'web3';
 
 const Chat = () => {
+  // const web3 = require('web3');
+  const web3 = new Web3();
+  
   const { auth, wallets } = useReactiveClient(client);
 
-  const { sessionId, setSessionId } = useSessionContext();
+  
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
@@ -43,85 +74,411 @@ const Chat = () => {
       text,
       sender: 'other',  // 'other' for received messages
     };
-    // setMessages([...messages, newMessage]);
     setMessages(oldmessages => [...oldmessages, newMessage])
-
+    playSound(text)
   };
 
-  const signMessages = () => {
-    console.log("sign");
-    
-    wallets.userWallets.map(async (wallet) => {
-      console.log("add",wallet.address);
-
-      console.log(client.viem);
-      
-      const walletClient = client.viem.createWalletClient({
-        wallet,
-      });
-
-      
-      console.log("client", walletClient);
-      
-      const signedMessage = await walletClient.signMessage({
-        message: "Hello, world!",
-      });
-      
-      console.log("signed", signedMessage);
-    })
-
-  }
-
-  const sId = "gd92e5107-306f-4591-b289-d0af95500ac0"
-
   // Send a message
-  const sendMessage = () => {
-    // if (input.trim()) {
+  const sendMessage = async () => {
+    console.log("msg", messageToGPT);
+    
+    // const ethers = require('ethers');
+    // const provider = new ethers.providers.JsonRpcProvider('https://testnet.sapphire.oasis.dev/');
+    const provider = new JsonRpcProvider('https://testnet.sapphire.oasis.dev/');
+
       const newMessage: Message = {
         id: messages.length + 1,
         text: messageToGPT,
         sender: 'me',  // 'me' for sent messages
       };
-      // setMessages([...messages, newMessage]);
       setMessages(oldmessages => [...oldmessages, newMessage])
-      // setInput('');  // Clear input after sending
-      setMessageToGPT('')
 
-      // Simulate a response from the other person
-      // setTimeout(() => {
-      //   receiveMessage('Response message');
-      // }, 1000);
+      // const { primaryWallet } = useDynamicContext()
+
+      // const provider = new ethers.providers.JsonRpcProvider('https://testnet.sapphire.oasis.dev/');
+
+      const privateKey = '0xacb3b27dc4b61dfd6f59bd3ebec6af1b0cf3ac76e41b4c036d7ebbcd5be8f619';
+      const wallet = new ethers.Wallet(privateKey, provider);
+
+      const contractAddress = '0xE2c03fc504c82a7e1ed0cc72f1E2db99BbDA86f9';
+      console.log("contractABI")
+      const contractABI = [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes21",
+              "name": "_roflAppID",
+              "type": "bytes21"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "messageIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "reply",
+              "type": "string"
+            }
+          ],
+          "name": "ReplyStored",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "message",
+              "type": "string"
+            }
+          ],
+          "name": "chatWithExpert",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            }
+          ],
+          "name": "getChatByIndex",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "userMessage",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "expertReply",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "name": "getChatHistory",
+          "outputs": [
+            {
+              "components": [
+                {
+                  "internalType": "string",
+                  "name": "userMessage",
+                  "type": "string"
+                },
+                {
+                  "internalType": "string",
+                  "name": "expertReply",
+                  "type": "string"
+                }
+              ],
+              "internalType": "struct ExpertChat.Chat[]",
+              "name": "",
+              "type": "tuple[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "repliedMessage",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "roflAppID",
+          "outputs": [
+            {
+              "internalType": "bytes21",
+              "name": "",
+              "type": "bytes21"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "reply",
+              "type": "string"
+            }
+          ],
+          "name": "storeReply",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "waitForReply",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "waitMessage",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "waitMessageIndex",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "waitUser",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      ]
+
+      const contract = new ethers.Contract(contractAddress, contractABI, wallet);
+
+      console.log("contractABI", contractABI)
+      
+
+      // const result = await contract.chatWithExpert(messageToGPT); // Fetch contract data
+      // console.log(JSON.stringify(result, null, 2));
+
+      const tx = await contract.chatWithExpert(messageToGPT); // Replace with actual function and args
+      await tx.wait();  // Wait for the transaction to be mined
+      console.log('Transaction successful:', tx.hash);
+
+      
+      // if (!(await contract.waitForReply())) {
+      //   console.log(
+      //    await contract.repliedMessage());
+      // }  
+
+      const intervalId = setInterval(async () => {
+        if (!(await contract.waitForReply())) {
+          const newMsg = await contract.repliedMessage()
+          receiveMessage(newMsg)
+          clearInterval(intervalId); // Stop checking once the condition is met
+        }
+      }, 1000); // Run every 1 second (1000 milliseconds)
+
+      // const chatHistory = await contract.getChatHistory(ethers.getAddress(wallet.address));
+      //   // Parse the results
+        
+      //   chatHistory.forEach((chat:any, index:any) => {
+      //       messages.push({role: "user", content: chat.userMessage});
+      //       messages.push({role: "assistant", content: chat.expertReply});
+      //   });
+
+
+
+      // wallets.setPrimary({ walletId: wallets.userWallets[0].id })
+
+      // if (primaryWallet) {
+      //   const provider = await getWeb3Provider(primaryWallet)
+      //   const signer = await getSigner(primaryWallet)
+
+      //   const contractABI = {
+      //     "inputs": [
+      //       {
+      //         "internalType": "string",
+      //         "name": "message",
+      //         "type": "string"
+      //       }
+      //     ],
+      //     "name": "chatWithExpert",
+      //     "outputs": [],
+      //     "stateMutability": "nonpayable",
+      //     "type": "function"
+      //   }
+      //   // Define the contract address
+      //   const contractAddress = '0x5a7095175AfbDD4F3736be7f8D846345c09d2D75' // Replace with your actual contract address
+
+      //   // Create the contract instance
+      //   const contract = new ethers.Contract(contractAddress, [contractABI], signer);
+
+      //   // Use provider and signer here
+      //   console.log('Provider, signer, and contract obtained successfully');
+
+      //   try {
+
+      //     const tx = await contract.chatWithExpert(messageToGPT); // This will send the transaction to the blockchain
+      //     console.log("Transaction Hash:", tx.hash);
+      
+      //     // Wait for the transaction to be mined (optional, can be awaited)
+      //     await tx.wait();
+
+      //     const messageWritten = await contract.waitMessage();
+      //     console.log("Message written: ", messageWritten.toString())
+
+      //   } catch (error) {
+      //     console.error("Error writing to contract:", error);
+      //   }
+        
+      //   // You can now interact with the contract, for example:
+      //   // await contract.chatWithExpert(messageToGPT);
+      // } else {
+      //   console.error('No primary wallet available')
+      // }
+
+      // handleSubmit(messageToGPT)
+      // const functionSignature = 'chatWithExpert(string)';
+    // const functionSelector = ethers.keccak256(ethers.toUtf8Bytes(functionSignature)).slice(0, 10); // First 4 bytes (8 hex chars)
+    
+    // console.log("fcn select", functionSelector); // Should output: 0xa9059cbb
+
+    // const encodedParams = defaultAbiCoder.encode(['string'], [messageToGPT]);
+
+    // const abiCoder = new ethers.AbiCoder();
+    // const encodedParams = abiCoder.encode(
+    //   ['string'],
+    //   [messageToGPT]
+    // );
+
+    // console.log("encoded param",encodedParams); // Encoded parameters in hex
+
+    // const data = functionSelector + encodedParams.slice(2); // Combine selector and params, removing "0x" from params
+    // console.log(" data",data); // This is the full `data` to send in the transaction
+
+    // const client = createWalletClient({
+    //   chain: mainnet,
+    //   transport: http('https://your.rpc.url')
+    // });
+    // console.log("user wallet", auth.authenticatedUser?.verifiedCredentials[0].address);
+    // console.log("wallets.userWallets[0]", wallets.userWallets[0]);
+    
+    // const publicViemClient = client.viem.createPublicClient({ chain: oasisTestnet })
+    // const lookupBalance = (address: `0x${string}`) => {
+    //   console.log("address", address)
+    //   publicViemClient.getBalance({ address });
     // }
-    signMessages()
-    // handleSubmit(messageToGPT)
+      
+
+    // let balance = lookupBalance(auth.authenticatedUser?.verifiedCredentials[0].address as `0x${string}`)
+    // console.log("balance", balance)
+
+    // const walletClient = client.wallets.primary && client.viem.createWalletClient({
+    //   wallet: client.wallets.primary,
+    //   chain: oasisTestnet
+    // })
+
+    // const functionAbi = [{
+    //   name: 'chatWithExpert',
+    //   type: 'function',
+    //   inputs: [
+    //     {
+    //       type: 'string',
+    //       name: 'messageToGPT',
+    //     },
+    //   ],
+    // }];
+
+    // if (!walletClient) {
+    //   console.error('Wallet client is undefined');
+    //   return;
+    // }
+
+    // const [account] = await walletClient.getAddresses();
+
+    // console.log("account", account);
+
+    // try {
+    //   walletClient.writeContract({
+    //     address: "0x5a7095175AfbDD4F3736be7f8D846345c09d2D75",
+    //     abi: functionAbi,
+    //     functionName: 'chatWithExpert',
+    //     args: [messageToGPT],
+    //     account
+    //   }).then((res) => console.log('tx',res))
+    // } catch (err) {
+    //   console.log('tx,err',err)
+    // }
+
+    // // Send the transaction
+    // const tx = await walletClient.sendTransaction({
+    //   to: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    //   data: data as `0x${string}`, // The data payload from the encoding above
+    //   value: 0n, // If no ETH is being sent with the transaction
+    // }).then((res) => console.log('tx',res))
+    // .catch((err) => console.log('tx,err',err))
+    
+    // console.log('Transaction hash:', tx);
   };
-
-
-
-
-
 
   const [messageToGPT, setMessageToGPT] = useState('');
 
-  // const handleMsgSend = async () => {
-  //   await addToChatHist(messageToGPT)
-  //   // console.log("before sending msg", chatHistoryList);
-  //   handleSubmit()
-  //   setMessageToGPT('')
-  //   // console.log("after sending msg", chatHistoryList);
-  // }
-
-  useEffect(()=>{
-    // handleSubmit(
-    // "Act as if you're a psychologist named Janet. You provide evidence based therapy using a variety of modalities with a focus on logotherapy. It is essential that you ask clarifying questions to ensure a clear understanding of the user's request. You continue the session in a natural and conversational way. You do not let the session end. Continue the session by asking probing questions. You should never break character. Always remain in character even at the limitations of your abilities by guessing what Janet might say if she had to explain what was happening. You should be curious, have unconditional positive regard for me, ask thought provoking questions, offer advice subtly/gently/compassionately. Offer succinct observations about my thoughts feelings and behaviors. Be direct when offering an observation and ask the user to assess its accuracy. Remain conversational. No lists. Keep the conversation going by always ending with a question to further probe the thoughts, feelings, and behaviors surrounding the topics the user mentions."
-    // )
-  })
 
   const handleSubmit = async (msg:string) => {
-    // const msgToGpt = messageToGPT //get the last element of the list
-    // console.log("msgToGpt", msgToGpt);
 
-    // await addToChatHist(msgToGpt)
     if (messageToGPT !== ''){
       msg = messageToGPT
     }
@@ -133,20 +490,8 @@ const Chat = () => {
             'Content-Type': 'application/json',
           },
         });
-        // console.log(response.data["response"]);
-        
-        // addGPTRespToList(response.data["response"])
-        // console.log("before adding to chat history from gpt", chatHistoryList);
-        
-        // await addToChatHist(response.data["response"]) //adds to chat hsitory list from gpt
-        // if (msg !== "Act as if you're a psychologist named Janet. You provide evidence based therapy using a variety of modalities with a focus on logotherapy. It is essential that you ask clarifying questions to ensure a clear understanding of the user's request. You continue the session in a natural and conversational way. You do not let the session end. Continue the session by asking probing questions. You should never break character. Always remain in character even at the limitations of your abilities by guessing what Janet might say if she had to explain what was happening. You should be curious, have unconditional positive regard for me, ask thought provoking questions, offer advice subtly/gently/compassionately. Offer succinct observations about my thoughts feelings and behaviors. Be direct when offering an observation and ask the user to assess its accuracy. Remain conversational. No lists. Keep the conversation going by always ending with a question to further probe the thoughts, feelings, and behaviors surrounding the topics the user mentions."){
           receiveMessage(response.data["response"])
-        // }
-        playSound(response.data["response"])
-        // return response.data["response"]
-        // Handle the response
-        // console.log(chatHistoryList);
-        
+          playSound(response.data["response"])
       } catch (error) {
         console.error('Error sending data to the server:', error);
       }
@@ -192,36 +537,10 @@ const Chat = () => {
     }
   };
 
-
-  // const [tranList, setTranList] = useState<string[]>([]);
-  // const [gptRespList, setGPTRespList] = useState<string[]>([]);
   const [chatHistoryList, setchatHistoryList] = useState<string[]>([]);
 
-  // const addTranToList = async (newString : string) => {
-  //   await setTranList([...tranList, newString]);
-  //   console.log("chathistlist", chatHistoryList);
-  //   console.log("translist", tranList);
-    
-  //   await setchatHistoryList([...chatHistoryList, newString]);
-  //   handleSubmit()
-  // };
-  
-  // const addGPTRespToList = (newResp:string) => {
-  //   setGPTRespList([...gptRespList, newResp]);
-  //   setchatHistoryList([...chatHistoryList, newResp]);
-  //   console.log("chathistlistGPT", chatHistoryList);
-  //   console.log("gptlist", gptRespList);
-  // }
-
   const addToChatHist = async (strMsg: string) => {
-    // console.log("actual msg", strMsg);
-    // await console.log("before setting", chatHistoryList);
-    // const chatHistoryCopy = [...chatHistoryList]
-    // await console.log(chatHistoryCopy)
-
     await setchatHistoryList([...chatHistoryList, strMsg])
-      
-    // await console.log("after setting", chatHistoryList);
   }
   
   const [chatOrCall, setChatOrCall] = useState(true)
@@ -332,16 +651,249 @@ const Chat = () => {
           .join('\n');
         console.log('Transcription:', transcription);
 
-        // addTranToList(transcription)
         const newMessage: Message = {
           id: messages.length + 1,
           text: transcription,
           sender: 'me',  // 'me' for sent messages
         };
-        // setMessages([...messages, newMessage]);
-        setMessages(oldmessages => [...oldmessages, newMessage]) 
-        // setMessageToGPT(transcription)       
-        handleSubmit(transcription)
+        setMessages(oldmessages => [...oldmessages, newMessage])
+        // setMessageToGPT(transcription)
+        // sendMessage()
+        const provider = new JsonRpcProvider('https://testnet.sapphire.oasis.dev/');
+        const privateKey = '0xacb3b27dc4b61dfd6f59bd3ebec6af1b0cf3ac76e41b4c036d7ebbcd5be8f619';
+        const wallet = new ethers.Wallet(privateKey, provider);
+
+        const contractAddress = '0xE2c03fc504c82a7e1ed0cc72f1E2db99BbDA86f9';
+        console.log("contractABI")
+        const contractABI = [
+          {
+            "inputs": [
+              {
+                "internalType": "bytes21",
+                "name": "_roflAppID",
+                "type": "bytes21"
+              }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "constructor"
+          },
+          {
+            "anonymous": false,
+            "inputs": [
+              {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "messageIndex",
+                "type": "uint256"
+              },
+              {
+                "indexed": false,
+                "internalType": "string",
+                "name": "reply",
+                "type": "string"
+              }
+            ],
+            "name": "ReplyStored",
+            "type": "event"
+          },
+          {
+            "inputs": [
+              {
+                "internalType": "string",
+                "name": "message",
+                "type": "string"
+              }
+            ],
+            "name": "chatWithExpert",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+          },
+          {
+            "inputs": [
+              {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "index",
+                "type": "uint256"
+              }
+            ],
+            "name": "getChatByIndex",
+            "outputs": [
+              {
+                "internalType": "string",
+                "name": "userMessage",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "expertReply",
+                "type": "string"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "inputs": [
+              {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+              }
+            ],
+            "name": "getChatHistory",
+            "outputs": [
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "userMessage",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "expertReply",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct ExpertChat.Chat[]",
+                "name": "",
+                "type": "tuple[]"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "inputs": [],
+            "name": "repliedMessage",
+            "outputs": [
+              {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "inputs": [],
+            "name": "roflAppID",
+            "outputs": [
+              {
+                "internalType": "bytes21",
+                "name": "",
+                "type": "bytes21"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "inputs": [
+              {
+                "internalType": "string",
+                "name": "reply",
+                "type": "string"
+              }
+            ],
+            "name": "storeReply",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+          },
+          {
+            "inputs": [],
+            "name": "waitForReply",
+            "outputs": [
+              {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "inputs": [],
+            "name": "waitMessage",
+            "outputs": [
+              {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "inputs": [],
+            "name": "waitMessageIndex",
+            "outputs": [
+              {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "inputs": [],
+            "name": "waitUser",
+            "outputs": [
+              {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          }
+        ]
+
+        const contract = new ethers.Contract(contractAddress, contractABI, wallet);
+
+        console.log("contractABI", contractABI)
+        
+
+        // const result = await contract.chatWithExpert(messageToGPT); // Fetch contract data
+        // console.log(JSON.stringify(result, null, 2));
+
+        const tx = await contract.chatWithExpert(transcription); // Replace with actual function and args
+        await tx.wait();  // Wait for the transaction to be mined
+        console.log('Transaction successful:', tx.hash);
+
+        
+        // if (!(await contract.waitForReply())) {
+        //   console.log(
+        //    await contract.repliedMessage());
+        // }  
+
+        const intervalId = setInterval(async () => {
+          if (!(await contract.waitForReply())) {
+            const newMsg = await contract.repliedMessage()
+            receiveMessage(newMsg)
+            clearInterval(intervalId); // Stop checking once the condition is met
+          }
+        }, 1000); // Run every 1 second (1000 milliseconds)
+        // handleSubmit(transcription)
       } else {
         console.log('No transcription found');
       }
@@ -357,18 +909,14 @@ const Chat = () => {
       <Modal visible={call} className="h-full" animationType="fade" transparent={false}>
         <SafeAreaView className="h-full pt-12 flex relative bg-black">
 
-          {/* <Header title="Chat"/> */}
           <View className='h-20 flex flex-row px-5 bg-black z-50'>
             <TouchableOpacity className="w-1/6 h-full items-center flex justify-center" onPress={() => {setChatOrCall(true); setCall(false);}}>
-              {/* <MaterialIcons name="arrow-back" size={24} color="white" /> */}
               <MaterialIcons name="exit-to-app" size={24} color="#B22222" />
             </TouchableOpacity>
             <View className='w-4/6 h-full items-center flex justify-center'>
                 <Text className="text-xl text-white font-semibold">Ongoing session</Text>
-                {/* <Text className="text-lg text-gray-500 font-normal">00:46 </Text> */}
             </View>
             <View className="w-1/6 h-full items-center flex justify-center">
-              {/* <MaterialIcons name="exit-to-app" size={24} color="#B22222" /> */}
               <View className="bg-green-700 w-2 h-2 rounded-full">
 
               </View>
@@ -397,12 +945,7 @@ const Chat = () => {
                               )
                             }
                             if (message.sender ==='other'){
-                              // <div
-                              //   key={message.id}
-                              //   className={`message ${message.sender === 'me' ? 'sent' : 'received'}`}
-                              // >
-                              //   {message.text}
-                              // </div>
+
                               return (
                                 <View className="flex flex-row my-2" key={message.id}>
                                 <View className="w-auto items-center mr-3">
@@ -415,19 +958,7 @@ const Chat = () => {
                               )
                             }
                           })}
-                        
-                          {/* {
-                            chatHistoryList.filter((item, index) => !(index % 2) )
-                            .map((item, index) => (
-                              <View className="flex flex-row my-2" >
-                                <View className="w-auto items-center mr-3">
-                                  <Image className="h-10 w-10 rounded-full border border-white" source={require('../../assets/chris.jpg')}/>
-                                </View>
-                                <View className=" w-5/6 min-h-16 px-2 py-3 justify-center rounded-lg">
-                                  <Text className="text-gray-400">{item}</Text>
-                                </View>
-                              </View>
-                            ))} */}
+
                   </View>
                 </ScrollView>
             </View>
@@ -490,20 +1021,7 @@ const Chat = () => {
                     <TouchableOpacity onPress={() => setCall(true)} className="h-1/2 w-full items-center justify-center rounded-xl bg-black">
                       <MaterialIcons name="call" size={48} color="white" />
                     </TouchableOpacity>
-                    {/* <View className='flex flex-row h-full w-full bg-blue-100'> */}
-                      {/* <View className="w-full items-center justify-center bg-green-100 h-full">
-                          <View className=" bg-red-100 p-5">
-                            <TouchableOpacity className="bg-black shadow-md shadow- w-1/4 rounded-full items-center justify-center aspect-square" onPress={() => setChatOrCall(false)}>
-                              <MaterialIcons name="chat-bubble" size={32} color="white" />
-                            </TouchableOpacity>
-                          </View>
-                          <View className=" bg--300 p-5 ">
-                            <TouchableOpacity className="bg-black shadow-md shadow- w-1/4 rounded-full items-center justify-center aspect-square" onPress={() => setCall(true)}>
-                              <MaterialIcons name="call" size={32} color="white" />
-                            </TouchableOpacity>
-                          </View>
-                      </View> */}
-                    {/* </View> */}
+                    
                   </SafeAreaView>
                 </>
               :
@@ -512,58 +1030,7 @@ const Chat = () => {
                 <ScrollView ref={scrollViewRef} className="w-full px-3  overflow-hidden" contentContainerStyle={{ flexGrow: 1 }} alwaysBounceVertical={false} onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })} >
                   <View onStartShouldSetResponder={() => true} className=" h-full justify-end items-center content-end">
 
-                        {/* {
-                          gptRespList.map((item, index) => (
-                            <View className="flex flex-row my-2" >
-                              <View className="w-auto  items-center">
-                                <Image className="h-10 w-10 rounded-full border border-white mr-3" source={require('../../assets/ana.jpeg')}/>
-                              </View>
-                              <View className="bg-[#F7F7F7] w-5/6 min-h-16 px-2 py-3 justify-center rounded-lg">
-                                <Text>{item}</Text>
-                              </View>
-                            </View>
-                          ))
-                        }
-                          {
-                            tranList.map((item, index) => (
-                              <View className="flex flex-row my-2" >
-                                <View className="w-auto  items-center">
-                                  <Image className="h-10 w-10 rounded-full border border-white mr-3" source={require('../../assets/chris.jpg')}/>
-                                </View>
-                                <View className="bg-[#F7F7F7] w-5/6 min-h-16 px-2 py-3 justify-center rounded-lg">
-                                  <Text>{item}</Text>
-                                </View>
-                              </View>
-                            ))} */}
-                            {/* {
-                          chatHistoryList
-                          .map((item, index) => {
-                            
-                            return index % 2?  (
-                              <View className="flex flex-row my-2" key={index} >
-                                <View className="w-auto  items-center">
-                                  <Image className="h-10 w-10 rounded-full border border-white mr-3" source={require('../../assets/ana.jpeg')}/>
-                                </View>
-                                <View className="bg-[#F7F7F7] w-5/6 min-h-16 px-2 py-3 justify-center rounded-lg">
-                                  <Text>{item}</Text>
-                                </View>
-                              </View>
-                              )
-                            :
-                              (
-                                <View className="flex flex-row my-2" key={index} >
-                                  <View className="w-auto  items-center">
-                                    <Image className="h-10 w-10 rounded-full border border-white mr-3" source={require('../../assets/chris.jpg')}/>
-                                  </View>
-                                  <View className="bg-[#F7F7F7] w-5/6 min-h-16 px-2 py-3 justify-center rounded-lg">
-                                    <Text>{item}</Text>
-                                  </View>
-                                </View>
-                              )
-                            
-                          }
-                          )
-                        } */}
+                        
 
                           {messages.map((message) => {
                             if (message.sender === 'me') {
@@ -579,12 +1046,7 @@ const Chat = () => {
                               )
                             }
                             if (message.sender ==='other'){
-                              // <div
-                              //   key={message.id}
-                              //   className={`message ${message.sender === 'me' ? 'sent' : 'received'}`}
-                              // >
-                              //   {message.text}
-                              // </div>
+                             
                               return (
                               <View className="flex flex-row my-2" key={message.id} >
                                 <View className="w-auto  items-center">
@@ -616,7 +1078,6 @@ const Chat = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
-               
                   <View className="flex w-full justify-center flex-row mt-3 ml-2 items-center">
                     <View className="w-[80%]  justify-center mr-3">
                       <TextInput
@@ -625,18 +1086,17 @@ const Chat = () => {
                         value={messageToGPT}
                         placeholder="What's on your mind?"
                         placeholderTextColor={'gray'}
-                        // keyboardType="numeric"
                       />
                       <TouchableOpacity className="absolute right-2" >
                         <MaterialIcons name="mic" size={24} color="black" />
                       </TouchableOpacity>
                     </View>
+                    
                     <TouchableOpacity className="p-3 bg-[#003778] rounded-full justify-center items-center" onPress={sendMessage}>
-                      {/* <Image className="h-4 w-4" source={require('../../assets/send.png')} /> */}
+                      
                       <MaterialIcons name="send" size={18} color="white" />
                     </TouchableOpacity>
                   </View>
-
               </View>
               </>
               }
